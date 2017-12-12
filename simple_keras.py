@@ -1,5 +1,6 @@
 from keras import Model
-from keras.layers import Input, Embedding, concatenate, Dense, Flatten
+from keras.backend import clip
+from keras.layers import Input, Embedding, concatenate, Dense, Flatten, Lambda
 
 from data_generator import NUM_USERS, NUM_MOVIES, get_ratings_data, BATCH_SIZE, transform_ratings_into_classes
 
@@ -40,6 +41,7 @@ def get_regression_model():
     x = Dense(64, activation='relu')(x)
 
     ratings = Dense(1, name='ratings')(x)
+    ratings = Lambda(lambda x: clip(x, 0., 5.))(ratings)
 
     model = Model(inputs=[user, movie], outputs=[ratings])
     # TODO: Maybe some other metrics?
