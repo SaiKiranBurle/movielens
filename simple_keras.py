@@ -40,8 +40,8 @@ def get_regression_model():
     x = Dense(64, activation='relu')(x)
     x = Dense(64, activation='relu')(x)
 
-    ratings = Dense(1, name='ratings')(x)
-    ratings = Lambda(lambda x: clip(x, 0., 5.))(ratings)
+    ratings = Dense(1)(x)
+    ratings = Lambda(lambda y: clip(y, 0., 5.), name='ratings')(ratings)
 
     model = Model(inputs=[user, movie], outputs=[ratings])
     # TODO: Maybe some other metrics?
