@@ -2,7 +2,7 @@ import os
 
 import numpy
 import pandas
-
+from tqdm import tqdm
 DATA_PATH = '/Users/sai/dev/datasets/movielens-20m/ml-20m/'
 NUM_USERS, NUM_MOVIES = 138493, 131262
 BATCH_SIZE = 25000
@@ -29,6 +29,53 @@ def get_ratings_data():
     return train_users, train_movies, train_ratings
 
 
+def get_genres_data(train_movies):
+    genres_file = os.path.join(DATA_PATH, 'movies.csv')
+    data = pandas.read_csv(genres_file, sep=',', usecols=(0, 1, 2))
+    movie_id_arr = data['movieId'].values - 1
+    movie_id_list = movie_id_arr.tolist()
+    movie_id_to_idx = {}
+    for movie_id in tqdm(movie_id_list):
+        movie_id_to_idx[movie_id] = movie_id_list.index(movie_id)
+    GENRES = [
+        "Action",
+        "Adventure",
+        "Animation",
+        "Children",
+        "Comedy",
+        "Crime",
+        "Documentary",
+        "Drama",
+        "Fantasy",
+        "Film-Noir",
+        "Horror",
+        "IMAX",
+        "Musical",
+        "Mystery",
+        "Romance",
+        "Sci-Fi",
+        "Thriller",
+        "War",
+        "Western",
+        "(no genres listed)"
+    ]
+    num_genres = len(GENRES)
+
+    def multi_hot_udf(g):
+        arr = numpy.zeros(num_genres)
+        l = g.split('|')
+        for i in l:
+            arr[GENRES.index(i)] = 1
+        return arr
+
+    d = data['genres'].apply(multi_hot_udf)
+    arr_genres = numpy.array(d.tolist())
+    arr_genres_dataset = []
+    for movie_id in tqdm(train_movies):
+        arr_genres_dataset.append(arr_genres[movie_id_to_idx[movie_id]])
+    return numpy.array(arr_genres_dataset)
+
+
 def transform_ratings_into_classes(ratings):
     num_rows = ratings.shape[0]
     t = 2 * ratings - 1
@@ -39,5 +86,6 @@ def transform_ratings_into_classes(ratings):
 
 if __name__ == "__main__":
     train_users, train_movies, train_ratings = get_ratings_data()
+    train_genres = get_genres_data(train_movies)
     from IPython import embed
     embed()
